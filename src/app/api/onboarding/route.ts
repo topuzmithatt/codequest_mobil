@@ -21,9 +21,14 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
+      const allCookies = cookieStore.getAll().map(c => `${c.name}=${c.value.slice(0, 10)}...`);
       console.error("[Onboarding Auth Error]:", authError);
+      console.log("[Received Cookies]:", allCookies);
       return NextResponse.json(
-        { error: "Yetkisiz erişim. Detay: " + (authError?.message || "Oturum bulunamadı (user nesnesi yok)") },
+        { 
+          error: "Yetkisiz erişim. Detay: " + (authError?.message || "Oturum bulunamadı") + 
+                 " | Alınan Çerezler: " + (allCookies.join(", ") || "Çerez yok")
+        },
         { status: 401 }
       );
     }
