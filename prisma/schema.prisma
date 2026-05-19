@@ -1,0 +1,293 @@
+// CodeQuest — Prisma Schema
+// Geliştirme Adımı 1: Tüm modeller, ilişkiler ve enum'lar
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+}
+
+// ─────────────────────────────────────────────
+// ENUM'LAR
+// ─────────────────────────────────────────────
+
+enum Language {
+  PYTHON
+  JAVASCRIPT
+  JAVA
+  CSHARP
+  HTML_CSS
+  GO
+  RUST
+  R
+  SWIFT
+  KOTLIN
+  SQL
+}
+
+enum UserGoal {
+  EXAM_PREP       // Sınav hazırlığı
+  JOB_HUNTING     // İş bulmak
+  CURIOSITY       // Merak / Diğer
+}
+
+enum ExperienceLevel {
+  NONE            // Hiç
+  SOME            // Biraz
+  YES             // Evet
+}
+
+enum ChallengeSource {
+  STATIC          // Veritabanında hazır (ilk 10 soru)
+  AI_GENERATED    // 10. sorudan sonra AI üretimi
+}
+
+enum SubmissionStatus {
+  PENDING
+  PASSED
+  FAILED
+}
+
+enum BadgeType {
+  LEVEL           // Seviye rozeti (10 seviye)
+  STREAK          // Seri rozeti
+  CHALLENGE       // Görev tamamlama rozeti
+  SPECIAL         // Özel etkinlik rozeti
+}
+
+// ─────────────────────────────────────────────
+// USER
+// ─────────────────────────────────────────────
+
+model User {
+  // Supabase auth.users.id ile birebir eşleşir — @default yok, Supabase set eder
+  id              String        @id @db.Uuid
+  email           String        @unique
+  username        String        @unique
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Gamification
+  hearts          Int           @default(5)        // Maks 5 can
+  heartsLastFill  DateTime      @default(now())    // Son can dolum zamanı
+  xp              Int           @default(0)        // Toplam XP
+  weeklyXp        Int           @default(0)        // Haftalık XP (her Pazartesi sıfırlanır)
+  level           Int           @default(1)        // 1–10 seviye
+  xpMultiplier    Float         @default(1.0)      // Aktif seri varsa 1.5
+
+  // Onboarding
+  onboardingDone  Boolean       @default(false)
+  goal            UserGoal?
+  experience      ExperienceLevel?
+
+  // İlişkiler
+  learningPaths   LearningPath[]
+  submissions     Submission[]
+  badges          UserBadge[]
+  streak          Streak?
+  referralsSent   Referral[]    @relation("ReferralSender")
+  referralReceived Referral?    @relation("ReferralReceiver")
+
+  @@map("users")
+}
+
+// ─────────────────────────────────────────────
+// LEARNING PATH
+// ─────────────────────────────────────────────
+
+model LearningPath {
+  id              String        @id @default(cuid())
+  userId          String        @db.Uuid
+  language        Language
+  goal            UserGoal
+  experience      ExperienceLevel
+  currentDifficulty Int         @default(1)        // ELO benzeri, 1–10
+  consecutiveCorrect Int        @default(0)        // Üst üste doğru sayısı
+  consecutiveWrong   Int        @default(0)        // Üst üste yanlış sayısı
+  topicsOrder     String[]                         // AI'ın belirlediği konu sırası (JSON array)
+  currentTopicIndex Int         @default(0)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // İlişkiler
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenges      Challenge[]
+  submissions     Submission[]
+
+  @@map("learning_paths")
+}
+
+// ─────────────────────────────────────────────
+// CHALLENGE (Görev)
+// ─────────────────────────────────────────────
+
+model Challenge {
+  id              String          @id @default(cuid())
+  learningPathId  String?                            // null → global/statik görev
+  title           String
+  description     String                             // Türkçe
+  starterCode     String
+  solutionCode    String?                            // YENİ EKLENEN ALAN: Örnek çözüm kodu
+  language        Language
+  difficulty      Int                                // 1–10
+  xpReward        Int                                // difficulty × 10
+  hints           String[]                           // Türkçe, 1–2 ipucu
+  topic           String                             // Konu etiketi (e.g. "loops", "functions")
+  source          ChallengeSource @default(STATIC)
+  isSandbox       Boolean         @default(false)    // Sandbox görevleri ayrı işaretlenir
+  createdAt       DateTime        @default(now())
+
+  // Test Case'ler (1-N ilişki)
+  testCases       TestCase[]
+
+  // İlişkiler
+  learningPath    LearningPath?   @relation(fields: [learningPathId], references: [id], onDelete: SetNull)
+  submissions     Submission[]
+
+  @@map("challenges")
+}
+
+// ─────────────────────────────────────────────
+// TEST CASE
+// ─────────────────────────────────────────────
+
+model TestCase {
+  id              String        @id @default(cuid())
+  challengeId     String
+  input           String
+  expectedOutput  String
+  isHidden        Boolean       @default(false)
+  description     String?       // Test case açıklaması
+  hints           String[]      // Test case ipuçları
+
+  challenge       Challenge     @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@map("test_cases")
+}
+// ─────────────────────────────────────────────
+// SUBMISSION (Gönderim)
+// ─────────────────────────────────────────────
+
+model Submission {
+  id              String            @id @default(cuid())
+  userId          String            @db.Uuid
+  challengeId     String
+  learningPathId  String?
+  code            String
+  language        Language
+  status          SubmissionStatus  @default(PENDING)
+  xpEarned        Int               @default(0)
+  isSandbox       Boolean           @default(false)
+  isPublic        Boolean           @default(false)    // Portfolio sayfasında gösterilsin mi?
+  executionOutput String?                           // Piston API ham çıktısı
+  createdAt       DateTime          @default(now())
+
+  // İlişkiler
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge       Challenge         @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  learningPath    LearningPath?     @relation(fields: [learningPathId], references: [id], onDelete: SetNull)
+  reviewResult    ReviewResult?
+
+  @@map("submissions")
+}
+
+// ─────────────────────────────────────────────
+// REVIEW RESULT (AI Code Reviewer çıktısı)
+// ─────────────────────────────────────────────
+
+model ReviewResult {
+  id                String        @id @default(cuid())
+  submissionId      String        @unique
+  correctness       Int           // 0–100
+  readability       Int           // 0–100
+  timeComplexity    Int           // 0–100
+  spaceComplexity   Int           // 0–100
+  idiomaticStyle    Int           // 0–100
+  overallScore      Int           // Ortalama
+  feedbackPositive  String        // Türkçe, 1 cümle
+  feedbackImprovement String      // Türkçe, 1–2 cümle
+  complexityNote    String        // 'Bu çözüm O(n) karmaşıklığında...'
+  createdAt         DateTime      @default(now())
+
+  // İlişkiler
+  submission        Submission    @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@map("review_results")
+}
+
+// ─────────────────────────────────────────────
+// BADGE (Rozet tanımı)
+// ─────────────────────────────────────────────
+
+model Badge {
+  id              String        @id @default(cuid())
+  name            String        @unique
+  description     String        // Türkçe
+  iconUrl         String
+  type            BadgeType
+  requiredValue   Int           // Örn: level=5 için requiredValue=5
+
+  // İlişkiler
+  userBadges      UserBadge[]
+
+  @@map("badges")
+}
+
+// ─────────────────────────────────────────────
+// USER BADGE (Kullanıcı–Rozet köprü tablosu)
+// ─────────────────────────────────────────────
+
+model UserBadge {
+  id              String        @id @default(cuid())
+  userId          String        @db.Uuid
+  badgeId         String
+  earnedAt        DateTime      @default(now())
+
+  // İlişkiler
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  badge           Badge         @relation(fields: [badgeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeId])   // Aynı rozet iki kez kazanılamaz
+  @@map("user_badges")
+}
+
+// ─────────────────────────────────────────────
+// STREAK (Günlük seri)
+// ─────────────────────────────────────────────
+
+model Streak {
+  id              String        @id @default(cuid())
+  userId          String        @unique @db.Uuid
+  currentStreak   Int           @default(0)        // Güncel seri uzunluğu
+  longestStreak   Int           @default(0)        // En uzun seri (all-time)
+  lastActivityAt  DateTime      @default(now())    // Son görev tamamlama tarihi
+  isActive        Boolean       @default(false)    // O gün görev yapıldı mı?
+  updatedAt       DateTime      @updatedAt
+
+  // İlişkiler
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("streaks")
+}
+
+// ─────────────────────────────────────────────
+// REFERRAL (Arkadaş daveti)
+// ─────────────────────────────────────────────
+
+model Referral {
+  id              String        @id @default(cuid())
+  senderId        String        @db.Uuid              // Daveti gönderen
+  receiverId      String?       @unique @db.Uuid      // Daveti kabul eden (kayıt olduktan sonra set edilir)
+  referralCode    String        @unique               // Benzersiz davet kodu
+  heartsAwarded   Boolean       @default(false)       // Can ödülü verildi mi?
+  createdAt       DateTime      @default(now())
+  usedAt          DateTime?                           // Kodun kullanıldığı tarih
+
+  // İlişkiler
+  sender          User          @relation("ReferralSender", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver        User?         @relation("ReferralReceiver", fields: [receiverId], references: [id], onDelete: SetNull)
+
+  @@map("referrals")
+}
