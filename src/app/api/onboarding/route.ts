@@ -21,7 +21,11 @@ export async function POST(req: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     if (authError || !user) {
-      return NextResponse.json({ error: "Yetkisiz erişim." }, { status: 401 });
+      console.error("[Onboarding Auth Error]:", authError);
+      return NextResponse.json(
+        { error: "Yetkisiz erişim. Detay: " + (authError?.message || "Oturum bulunamadı (user nesnesi yok)") },
+        { status: 401 }
+      );
     }
 
     const isAnon = !user.email;
