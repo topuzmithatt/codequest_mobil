@@ -32,7 +32,7 @@ git init
 git add .
 git commit -m "İlk yükleme ve production ayarlari eklendi"
 git branch -M main
-git remote add origin https://github.com/topuzmithatt/codequest.git
+git remote add origin https://github.com/topuzmithatt/codequest_mobil.git
 git push -u origin main
 ```
 
@@ -58,7 +58,7 @@ Sistemin "Sandbox" yani kullanıcıların yazdığı kodları derleme işini yap
 1. [Render.com](https://render.com/)'a girip GitHub hesabınızla kayıt olun.
 2. Sağ üstten **"New"** -> **"Web Service"** seçeneğine tıklayın.
 3. **"Build and deploy from a Git repository"** seçeneğini seçin.
-4. GitHub'a yüklediğiniz **`codequest`** projenizi bağlayın.
+4. GitHub'a yüklediğiniz **`codequest_mobil`** projenizi bağlayın.
 5. Ayarlar ekranında şunları doldurun:
    - **Name:** `codequest-engine` (veya istediğiniz bir isim)
    - **Region:** Frankfurt (veya size en yakın olanı)
@@ -78,7 +78,7 @@ Sistemin "Sandbox" yani kullanıcıların yazdığı kodları derleme işini yap
 
 1. [Vercel.com](https://vercel.com/)'a gidip GitHub hesabınızla giriş yapın.
 2. **"Add New"** -> **"Project"** butonuna tıklayın.
-3. Kendi **`codequest`** deponuzu bulun ve **"Import"** butonuna basın.
+3. Kendi **`codequest_mobil`** deponuzu bulun ve **"Import"** butonuna basın.
 4. Çıkan ekranda **"Environment Variables"** bölümünü genişletin.
 5. Supabase bilgileri (`DATABASE_URL`, `NEXT_PUBLIC_SUPABASE_URL`, vb.) ve Yapay Zeka API şifrenizi buraya ekleyin.
 6. **ÖNEMLİ:** Buraya ekstra olarak yeni bir değişken ekleyin:
