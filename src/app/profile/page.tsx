@@ -93,9 +93,28 @@ export default async function ProfilePage() {
     level:    u.level,
   }));
 
-  const userRank = leaderboard.find((e) => e.userId === user.id)?.rank ?? null;
+  // Giriş yapan kullanıcının genel sıralamasını hesapla:
+  const higherXpCount = await prisma.user.count({
+    where: {
+      weeklyXp: {
+        gt: dbUser.weeklyXp,
+      },
+    },
+  });
+  const calculatedRank = higherXpCount + 1;
 
-  // En son oluşturulan öğrenme yolundan doğru learn linkiüret
+  const userRankInTop10 = leaderboard.find((e) => e.userId === user.id)?.rank ?? null;
+  const currentUserEntry: LeaderboardEntry | null = !userRankInTop10
+    ? {
+        rank: calculatedRank,
+        userId: dbUser.id,
+        username: dbUser.username,
+        weeklyXp: dbUser.weeklyXp,
+        level: dbUser.level,
+      }
+    : null;
+
+  // En son oluşturulan öğrenme yolundan doğru learn linki üret
   const firstPath = dbUser.learningPaths[0];
   const learnHref = firstPath
     ? `/learn/${firstPath.topicsOrder[0] ?? "variables"}?lpId=${firstPath.id}`
@@ -108,7 +127,7 @@ export default async function ProfilePage() {
       xp={dbUser.xp}
       level={dbUser.level}
       streak={dbUser.streak?.currentStreak ?? 0}
-      weeklyRank={userRank}
+      weeklyRank={calculatedRank}
       username={dbUser.username}
       learnHref={learnHref}
     >
@@ -134,6 +153,7 @@ export default async function ProfilePage() {
           <WeeklyLeaderboard
             leaderboard={leaderboard}
             currentUserId={user.id}
+            currentUserEntry={currentUserEntry}
           />
         </div>
       </div>

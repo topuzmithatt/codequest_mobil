@@ -521,9 +521,11 @@ function RankMedal({ rank }: { rank: number }) {
 export function WeeklyLeaderboard({
   leaderboard,
   currentUserId,
+  currentUserEntry,
 }: {
   leaderboard:   LeaderboardEntry[];
   currentUserId: string;
+  currentUserEntry?: LeaderboardEntry | null;
 }) {
   return (
     <div
@@ -599,6 +601,73 @@ export function WeeklyLeaderboard({
               </div>
             );
           })}
+
+          {/* Top 10 dışındaki giriş yapan kullanıcı kendi sıralamasını görsün */}
+          {currentUserEntry && (
+            <>
+              {/* Dikey Boşluk / Bölücü */}
+              <div 
+                className="flex items-center justify-center py-1 text-[#555] text-xs font-bold tracking-widest select-none"
+                style={{ fontFamily: "'JetBrains Mono', monospace" }}
+              >
+                • • •
+              </div>
+
+              {/* Kendisi */}
+              <div
+                key={currentUserEntry.userId}
+                className="flex items-center gap-3 px-3 py-2 rounded"
+                style={{
+                  background: "rgba(0, 122, 204, 0.12)",
+                  border:     "1px solid rgba(0, 122, 204, 0.35)",
+                  boxShadow:  "0 2px 8px -2px rgba(0,0,0,0.4)",
+                }}
+              >
+                {/* Sıra */}
+                <div style={{ minWidth: 24, display: "flex", justifyContent: "center" }}>
+                  <span
+                    className="tabular-nums font-bold"
+                    style={{ color: "#9cdcfe", fontSize: 12, fontFamily: "'JetBrains Mono', monospace", minWidth: 20, textAlign: "right" }}
+                  >
+                    {currentUserEntry.rank}
+                  </span>
+                </div>
+
+                {/* Kullanıcı adı */}
+                <span
+                  className="flex-1 truncate text-sm"
+                  style={{
+                    color:      "#9cdcfe",
+                    fontFamily: "'JetBrains Mono', monospace",
+                    fontWeight: 600,
+                  }}
+                >
+                  {currentUserEntry.username}
+                  <span style={{ color: "#007acc", fontSize: 9, marginLeft: 6 }}>(sen)</span>
+                </span>
+
+                {/* Seviye */}
+                <span
+                  style={{ color: "#858585", fontSize: 10, fontFamily: "'JetBrains Mono', monospace", minWidth: 36, textAlign: "right" }}
+                >
+                  Lv.{currentUserEntry.level}
+                </span>
+
+                {/* Haftalık XP */}
+                <span
+                  className="tabular-nums text-xs font-bold"
+                  style={{
+                    color:      "#007acc",
+                    fontFamily: "'JetBrains Mono', monospace",
+                    minWidth:   56,
+                    textAlign:  "right",
+                  }}
+                >
+                  {currentUserEntry.weeklyXp.toLocaleString("tr-TR")} XP
+                </span>
+              </div>
+            </>
+          )}
         </div>
       )}
     </div>
