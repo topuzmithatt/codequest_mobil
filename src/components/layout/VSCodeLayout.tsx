@@ -205,17 +205,13 @@ function HeartsIndicator({ hearts, heartsLastFill }: { hearts: number; heartsLas
       : null;
 
   return (
-    <div className="relative group flex items-center gap-1">
-      {/* Masaüstünde 5 kalp, mobilde 1 kalp göster */}
-      <div className="hidden sm:flex items-center gap-0.5">
+    <div className="relative group flex items-center gap-1.5">
+      {/* Mobilde ve masaüstünde her zaman 5 kalp göster (dolu/boş) */}
+      <div className="flex items-center gap-0.5">
         {Array.from({ length: 5 }).map((_, i) => (
           <IconHeart key={i} filled={i < hearts} />
         ))}
       </div>
-      <div className="flex sm:hidden items-center">
-        <IconHeart filled={hearts > 0} />
-      </div>
-      <span className="ml-1 sm:ml-1.5 opacity-75">{hearts}/5</span>
 
       {hearts < 5 && (
         <div
