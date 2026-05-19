@@ -605,14 +605,6 @@ export function WeeklyLeaderboard({
           {/* Top 10 dışındaki giriş yapan kullanıcı kendi sıralamasını görsün */}
           {currentUserEntry && (
             <>
-              {/* Dikey Boşluk / Bölücü */}
-              <div 
-                className="flex items-center justify-center py-1 text-[#555] text-xs font-bold tracking-widest select-none"
-                style={{ fontFamily: "'JetBrains Mono', monospace" }}
-              >
-                • • •
-              </div>
-
               {/* Kendisi */}
               <div
                 key={currentUserEntry.userId}
@@ -621,6 +613,7 @@ export function WeeklyLeaderboard({
                   background: "rgba(0, 122, 204, 0.12)",
                   border:     "1px solid rgba(0, 122, 204, 0.35)",
                   boxShadow:  "0 2px 8px -2px rgba(0,0,0,0.4)",
+                  marginTop:  4, // İlk 10 satırdan hafifçe ayrışması için ufak bir üst boşluk
                 }}
               >
                 {/* Sıra */}
