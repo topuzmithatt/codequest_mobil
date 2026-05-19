@@ -212,6 +212,9 @@ function HeartsIndicator({ hearts, heartsLastFill }: { hearts: number; heartsLas
           <IconHeart key={i} filled={i < hearts} />
         ))}
       </div>
+      <span className="ml-1 text-xs opacity-75 font-semibold" style={{ fontFamily: "'JetBrains Mono', monospace" }}>
+        {hearts}/5
+      </span>
 
       {hearts < 5 && (
         <div
