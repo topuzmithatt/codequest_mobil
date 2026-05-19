@@ -65,7 +65,7 @@ Sistemin "Sandbox" yani kullanıcıların yazdığı kodları derleme işini yap
    - **Branch:** `main`
    - **Runtime:** `Docker` (Sistem projedeki Dockerfile'ı otomatik algılar)
    - **Instance Type:** `Free` (Ücretsiz paket) seçin.
-6. Alt kısımdan **"Advanced"** bölümünü açıp **"Add Environment Variable"** diyerek `.env` dosyanızdaki `GROQ_API_KEY`, `DATABASE_URL` gibi bilgileri ekleyin. (Şimdilik Socket URL eklemeyin).
+6. Render üzerinde çalışan kod çalıştırma motorunun (`exec-server.js`) veritabanına veya yapay zekaya doğrudan erişmesi gerekmediği için **Render tarafında herhangi bir Environment Variable (Ortam Değişkeni) tanımlamanıza gerek yoktur.** Render, port yönetimini otomatik gerçekleştirecektir.
 7. Eğer **Start Command** sorarsa: `node exec-server.js` yazın. (Sormazsa boş bırakın).
 8. **"Create Web Service"** butonuna basın.
 9. Render kurulumu (Build) yapacak ve bu yaklaşık 3-5 dakika sürecektir. İşlem bitince sayfanın sol üstünde `https://codequest-xxxx.onrender.com` şeklinde bir URL belirecek. **Bu URL'yi kopyalayın.**
